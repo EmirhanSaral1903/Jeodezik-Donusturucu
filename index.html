@@ -15,6 +15,7 @@
             --primary-hover: #0369a1;
             --radius: 8px;
             --input-bg: #ffffff;
+            --panel-bg: #f8fafc;
         }
         body.dark-theme {
             --bg-body: #0f172a;
@@ -25,6 +26,7 @@
             --primary: #38bdf8;
             --primary-hover: #0ea5e9;
             --input-bg: #0f172a;
+            --panel-bg: #0f172a;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -151,7 +153,7 @@
             display: flex;
             gap: 1rem;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
         .btn-primary {
             flex: 1;
@@ -175,6 +177,24 @@
             font-size: 0.9rem;
             border: 1px solid rgba(2, 132, 199, 0.2);
         }
+
+        .advanced-stats {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.4rem;
+        }
+        .stat-row:last-child { margin-bottom: 0; }
+        .stat-label { font-weight: 600; color: var(--text-muted); }
+        .stat-val { font-family: monospace; font-size: 0.9rem; }
         
         .history-panel {
             border-top: 1px solid var(--border);
@@ -303,6 +323,21 @@
         <div class="quadrant-display" id="quadrant">Bölge: -</div>
     </div>
 
+    <div class="advanced-stats" id="advanced-stats">
+        <div class="stat-row">
+            <span class="stat-label">Arazi Eğim Yüzdesi (Tan):</span>
+            <span class="stat-val" id="stat-slope">-</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">İrtifa Açısı (Zenith varsayımı):</span>
+            <span class="stat-val" id="stat-zenith">-</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Zaman Açısı (Astronomik):</span>
+            <span class="stat-val" id="stat-hour">-</span>
+        </div>
+    </div>
+
     <div class="history-panel">
         <label>
             Geçmiş İşlemler
@@ -363,31 +398,55 @@
         const p = getPrecision();
         const quadEl = document.getElementById('quadrant');
         const radPiEl = document.getElementById('rad-pi');
+        const advStats = document.getElementById('advanced-stats');
 
         if (isNaN(baseDegree)) {
             Object.values(inputs).forEach(input => input.value = '');
             quadEl.innerText = "Bölge: -";
             radPiEl.innerText = "0 π";
+            advStats.style.display = 'none';
             return;
         }
 
-        baseDegree = normalizeAngle(baseDegree, 360);
-        quadEl.innerText = "Bölge: " + determineQuadrant(baseDegree);
-        radPiEl.innerText = (baseDegree / 180).toFixed(4) + " π";
+        let normDeg = normalizeAngle(baseDegree, 360);
+        quadEl.innerText = "Bölge: " + determineQuadrant(normDeg);
+        radPiEl.innerText = (normDeg / 180).toFixed(4) + " π";
 
-        inputs.deg.value = parseFloat(baseDegree.toFixed(p));
-        inputs.grad.value = parseFloat((baseDegree * (200 / 180)).toFixed(p));
-        inputs.rad.value = parseFloat((baseDegree * (Math.PI / 180)).toFixed(p));
-        inputs.mil.value = parseFloat((baseDegree * (6400 / 360)).toFixed(p));
+        inputs.deg.value = parseFloat(normDeg.toFixed(p));
+        inputs.grad.value = parseFloat((normDeg * (200 / 180)).toFixed(p));
+        inputs.rad.value = parseFloat((normDeg * (Math.PI / 180)).toFixed(p));
+        inputs.mil.value = parseFloat((normDeg * (6400 / 360)).toFixed(p));
 
-        let d = Math.floor(baseDegree);
-        let minFloat = (baseDegree - d) * 60;
+        let d = Math.floor(normDeg);
+        let minFloat = (normDeg - d) * 60;
         let m = Math.floor(minFloat);
         let s = (minFloat - m) * 60;
 
         inputs.dms_d.value = d;
         inputs.dms_m.value = m;
         inputs.dms_s.value = parseFloat(s.toFixed(2)); 
+
+        // Gelişmiş İstatistikler
+        advStats.style.display = 'block';
+        
+        // Eğim (%)
+        if (normDeg === 90 || normDeg === 270) {
+            document.getElementById('stat-slope').innerText = "Tanımsız (∞)";
+        } else {
+            let slope = Math.tan(normDeg * Math.PI / 180) * 100;
+            document.getElementById('stat-slope').innerText = "% " + slope.toFixed(2);
+        }
+
+        // İrtifa (Zenith = 0 varsayımıyla)
+        let altitude = 90 - normDeg;
+        document.getElementById('stat-zenith').innerText = altitude.toFixed(p) + "°";
+
+        // Zaman Açısı (1 saat = 15 derece)
+        let totalSecs = (normDeg / 15) * 3600;
+        let tH = Math.floor(totalSecs / 3600);
+        let tM = Math.floor((totalSecs % 3600) / 60);
+        let tS = totalSecs % 60;
+        document.getElementById('stat-hour').innerText = `${tH}h ${tM}m ${tS.toFixed(2)}s`;
     }
 
     function handleInput(source) {
@@ -426,10 +485,8 @@
     }
 
     function recalculate() { if (!isNaN(currentBaseDegree)) updateAllFields(currentBaseDegree); }
-
     function clearAll() { updateAllFields(NaN); }
 
-    // --- History Functions ---
     function renderHistory() {
         const hl = document.getElementById('history-list');
         if (historyData.length === 0) {
@@ -452,7 +509,7 @@
             grad: (normalizeAngle(degVal, 360) * (200 / 180)).toFixed(p),
             label: label
         });
-        if (historyData.length > 3) historyData.pop(); // Son 3 işlemi tut
+        if (historyData.length > 3) historyData.pop();
         renderHistory();
     }
 
