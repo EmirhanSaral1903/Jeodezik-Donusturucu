@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeodezik Açı Dönüştürücü</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .error {
+            color: red;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Açı Dönüştürücü</h2>
+    
+    <div class="input-group">
+        <label for="degree">Derece (°)</label>
+        <input type="number" id="degree" placeholder="Derece girin" oninput="calculateFromDegree()">
+    </div>
+
+    <div class="input-group">
+        <label for="grad">Grad (g)</label>
+        <input type="number" id="grad" placeholder="Grad girin" oninput="calculateFromGrad()">
+    </div>
+
+    <div class="input-group">
+        <label for="radian">Radyan (rad)</label>
+        <input type="number" id="radian" placeholder="Radyan girin" oninput="calculateFromRadian()">
+    </div>
+    
+    <div id="errorMessage" class="error">Lütfen geçerli bir sayı giriniz.</div>
+</div>
+
+<script>
+    const degreeInput = document.getElementById('degree');
+    const gradInput = document.getElementById('grad');
+    const radianInput = document.getElementById('radian');
+    const errorMsg = document.getElementById('errorMessage');
+
+    function clearInputs() {
+        degreeInput.value = '';
+        gradInput.value = '';
+        radianInput.value = '';
+        errorMsg.style.display = 'none';
+    }
+
+    function calculateFromDegree() {
+        const deg = parseFloat(degreeInput.value);
+        if (degreeInput.value === '') return clearInputs();
+        if (isNaN(deg)) {
+            errorMsg.style.display = 'block';
+            return;
+        }
+        errorMsg.style.display = 'none';
+        gradInput.value = (deg * (200 / 180)).toFixed(4);
+        radianInput.value = (deg * (Math.PI / 180)).toFixed(4);
+    }
+
+    function calculateFromGrad() {
+        const grad = parseFloat(gradInput.value);
+        if (gradInput.value === '') return clearInputs();
+        if (isNaN(grad)) {
+            errorMsg.style.display = 'block';
+            return;
+        }
+        errorMsg.style.display = 'none';
+        degreeInput.value = (grad * (180 / 200)).toFixed(4);
+        radianInput.value = (grad * (Math.PI / 200)).toFixed(4);
+    }
+
+    function calculateFromRadian() {
+        const rad = parseFloat(radianInput.value);
+        if (radianInput.value === '') return clearInputs();
+        if (isNaN(rad)) {
+            errorMsg.style.display = 'block';
+            return;
+        }
+        errorMsg.style.display = 'none';
+        degreeInput.value = (rad * (180 / Math.PI)).toFixed(4);
+        gradInput.value = (rad * (200 / Math.PI)).toFixed(4);
+    }
+</script>
+
+</body>
+</html>
