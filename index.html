@@ -14,6 +14,17 @@
             --primary: #0284c7;
             --primary-hover: #0369a1;
             --radius: 8px;
+            --input-bg: #ffffff;
+        }
+        body.dark-theme {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --primary: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --input-bg: #0f172a;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -25,6 +36,7 @@
             min-height: 100vh;
             margin: 0;
             padding: 1rem;
+            transition: background-color 0.3s, color 0.3s;
         }
         .app-container {
             background: var(--bg-card);
@@ -33,6 +45,7 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 500px;
+            transition: background-color 0.3s;
         }
         .header {
             display: flex;
@@ -51,15 +64,17 @@
             display: flex;
             gap: 0.5rem;
         }
-        select, .btn-clear {
+        select, .btn-icon {
             padding: 0.4rem;
             border: 1px solid var(--border);
             border-radius: 4px;
             font-size: 0.85rem;
-            background: #f8fafc;
+            background: var(--input-bg);
             color: var(--text-main);
             cursor: pointer;
+            transition: border-color 0.2s;
         }
+        select:focus { outline: none; border-color: var(--primary); }
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -75,6 +90,8 @@
             font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
         }
         .input-wrapper {
             position: relative;
@@ -86,6 +103,8 @@
             border: 1px solid var(--border);
             border-radius: 6px;
             font-size: 0.95rem;
+            background-color: var(--input-bg);
+            color: var(--text-main);
             transition: border 0.2s;
         }
         input[type="number"]:focus {
@@ -114,31 +133,25 @@
             opacity: 0.6;
             transition: opacity 0.2s;
         }
-        .btn-copy:hover {
-            opacity: 1;
-        }
+        .btn-copy:hover { opacity: 1; }
         .dms-container {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 0.5rem;
-            background: #f8fafc;
+            background: var(--input-bg);
             padding: 1rem;
             border-radius: 6px;
             border: 1px solid var(--border);
             margin-bottom: 1.5rem;
         }
-        .dms-container .input-wrapper input {
-            padding-right: 1.5rem;
-        }
-        .dms-container .unit-label {
-            right: 0.5rem;
-            font-weight: bold;
-            color: var(--text-main);
-        }
+        .dms-container .input-wrapper input { padding-right: 1.5rem; }
+        .dms-container .unit-label { right: 0.5rem; font-weight: bold; color: var(--text-main); }
+        
         .actions {
             display: flex;
             gap: 1rem;
             align-items: center;
+            margin-bottom: 1.5rem;
         }
         .btn-primary {
             flex: 1;
@@ -150,26 +163,54 @@
             font-weight: 600;
             cursor: pointer;
         }
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
+        .btn-primary:hover { background: var(--primary-hover); }
         .quadrant-display {
             flex: 1;
             text-align: center;
-            background: #e0f2fe;
-            color: #0369a1;
+            background: rgba(2, 132, 199, 0.1);
+            color: var(--primary);
             padding: 0.75rem;
             border-radius: 6px;
             font-weight: 600;
             font-size: 0.9rem;
+            border: 1px solid rgba(2, 132, 199, 0.2);
         }
+        
+        .history-panel {
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .history-item {
+            background: var(--bg-body);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-main);
+        }
+        .history-empty {
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+        }
+        
         .toast {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: #334155;
-            color: white;
+            background: var(--text-main);
+            color: var(--bg-card);
             padding: 0.5rem 1.5rem;
             border-radius: 20px;
             font-size: 0.85rem;
@@ -190,12 +231,13 @@
     <div class="header">
         <h2>Açı Dönüştürücü</h2>
         <div class="settings">
-            <select id="precision" onchange="recalculate()">
+            <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Gece/Gündüz Modu">🌙</button>
+            <select id="precision" onchange="recalculate()" title="Ondalık Hassasiyet">
                 <option value="2">.00</option>
                 <option value="4" selected>.0000</option>
                 <option value="6">.000000</option>
             </select>
-            <button class="btn-clear" onclick="clearAll()" title="Tümünü Temizle">↺</button>
+            <button class="btn-icon" onclick="clearAll()" title="Tümünü Temizle">↺</button>
         </div>
     </div>
     
@@ -219,7 +261,10 @@
         </div>
 
         <div class="input-group">
-            <label>Radyan</label>
+            <label>
+                Radyan
+                <span id="rad-pi" style="color:var(--primary); font-weight:normal;">0 π</span>
+            </label>
             <div class="input-wrapper">
                 <input type="number" id="rad" oninput="handleInput('rad')">
                 <span class="unit-label">rad</span>
@@ -237,7 +282,7 @@
         </div>
     </div>
 
-    <label>Derece Dakika Saniye (DMS)</label>
+    <label style="margin-bottom:0.5rem; display:block;">Derece Dakika Saniye (DMS)</label>
     <div class="dms-container">
         <div class="input-wrapper">
             <input type="number" id="dms_d" oninput="handleInput('dms')">
@@ -257,6 +302,16 @@
         <button class="btn-primary" onclick="calculateReverseAzimuth()">Ters Semt Hesapla</button>
         <div class="quadrant-display" id="quadrant">Bölge: -</div>
     </div>
+
+    <div class="history-panel">
+        <label>
+            Geçmiş İşlemler
+            <span style="color:var(--primary); cursor:pointer; font-weight:normal;" onclick="clearHistory()">Temizle</span>
+        </label>
+        <ul class="history-list" id="history-list">
+            <li class="history-empty">Henüz kayıt yok. (Kopyaladığınızda eklenir)</li>
+        </ul>
+    </div>
 </div>
 
 <div id="toast" class="toast">Kopyalandı!</div>
@@ -273,10 +328,15 @@
     };
     
     let currentBaseDegree = NaN;
+    let historyData = [];
 
-    function getPrecision() {
-        return parseInt(document.getElementById('precision').value);
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        const btn = document.getElementById('theme-toggle');
+        btn.innerText = document.body.classList.contains('dark-theme') ? '☀️' : '🌙';
     }
+
+    function getPrecision() { return parseInt(document.getElementById('precision').value); }
 
     function normalizeAngle(value, max) {
         let mod = value % max;
@@ -302,15 +362,18 @@
         currentBaseDegree = baseDegree;
         const p = getPrecision();
         const quadEl = document.getElementById('quadrant');
+        const radPiEl = document.getElementById('rad-pi');
 
         if (isNaN(baseDegree)) {
             Object.values(inputs).forEach(input => input.value = '');
             quadEl.innerText = "Bölge: -";
+            radPiEl.innerText = "0 π";
             return;
         }
 
         baseDegree = normalizeAngle(baseDegree, 360);
         quadEl.innerText = "Bölge: " + determineQuadrant(baseDegree);
+        radPiEl.innerText = (baseDegree / 180).toFixed(4) + " π";
 
         inputs.deg.value = parseFloat(baseDegree.toFixed(p));
         inputs.grad.value = parseFloat((baseDegree * (200 / 180)).toFixed(p));
@@ -354,7 +417,6 @@
                 let d = parseFloat(inputs.dms_d.value) || 0;
                 let m = parseFloat(inputs.dms_m.value) || 0;
                 let s = parseFloat(inputs.dms_s.value) || 0;
-                
                 if (inputs.dms_d.value === '' && inputs.dms_m.value === '' && inputs.dms_s.value === '') {
                     return updateAllFields(NaN);
                 }
@@ -363,30 +425,54 @@
         }
     }
 
-    function recalculate() {
-        if (!isNaN(currentBaseDegree)) {
-            updateAllFields(currentBaseDegree);
+    function recalculate() { if (!isNaN(currentBaseDegree)) updateAllFields(currentBaseDegree); }
+
+    function clearAll() { updateAllFields(NaN); }
+
+    // --- History Functions ---
+    function renderHistory() {
+        const hl = document.getElementById('history-list');
+        if (historyData.length === 0) {
+            hl.innerHTML = '<li class="history-empty">Henüz kayıt yok. (Kopyaladığınızda eklenir)</li>';
+            return;
         }
+        hl.innerHTML = historyData.map(item => 
+            `<li class="history-item">
+                <span><strong>${item.deg}°</strong> = ${item.grad}g</span>
+                <span style="color:var(--text-muted); font-size:0.75rem;">${item.label}</span>
+            </li>`
+        ).join('');
     }
 
-    function clearAll() {
-        updateAllFields(NaN);
+    function addToHistory(degVal, label) {
+        if (isNaN(degVal)) return;
+        const p = getPrecision();
+        historyData.unshift({
+            deg: normalizeAngle(degVal, 360).toFixed(p),
+            grad: (normalizeAngle(degVal, 360) * (200 / 180)).toFixed(p),
+            label: label
+        });
+        if (historyData.length > 3) historyData.pop(); // Son 3 işlemi tut
+        renderHistory();
     }
+
+    function clearHistory() { historyData = []; renderHistory(); }
 
     function calculateReverseAzimuth() {
         if (isNaN(currentBaseDegree)) return;
         let newDeg = currentBaseDegree < 180 ? currentBaseDegree + 180 : currentBaseDegree - 180;
         updateAllFields(newDeg);
+        addToHistory(newDeg, "Ters Semt");
     }
 
     function copyVal(elementId) {
         const val = document.getElementById(elementId).value;
         if (!val) return;
-        
         navigator.clipboard.writeText(val).then(() => {
             const toast = document.getElementById('toast');
             toast.style.opacity = '1';
             setTimeout(() => toast.style.opacity = '0', 2000);
+            addToHistory(currentBaseDegree, "Kopyalandı");
         });
     }
 </script>
