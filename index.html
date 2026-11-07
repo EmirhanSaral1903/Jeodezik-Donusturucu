@@ -46,7 +46,7 @@
             border-radius: var(--radius);
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 540px;
             transition: background-color 0.3s;
         }
         .header {
@@ -182,19 +182,22 @@
             background: var(--panel-bg);
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 0.75rem 1rem;
-            font-size: 0.85rem;
+            padding: 1rem;
             margin-bottom: 1.5rem;
             display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
         }
-        .stat-row {
+        .stat-item {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.4rem;
+            flex-direction: column;
+            background: var(--bg-card);
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
         }
-        .stat-row:last-child { margin-bottom: 0; }
-        .stat-label { font-weight: 600; color: var(--text-muted); }
-        .stat-val { font-family: monospace; font-size: 0.9rem; }
+        .stat-label { font-weight: 600; color: var(--text-muted); font-size: 0.75rem; margin-bottom: 0.2rem; }
+        .stat-val { font-family: monospace; font-size: 0.9rem; color: var(--text-main); }
         
         .history-panel {
             border-top: 1px solid var(--border);
@@ -239,7 +242,7 @@
             pointer-events: none;
         }
         @media (max-width: 480px) {
-            .grid-2 { grid-template-columns: 1fr; }
+            .grid-2, .advanced-stats { grid-template-columns: 1fr; }
             .actions { flex-direction: column; }
             .quadrant-display { width: 100%; box-sizing: border-box; }
         }
@@ -257,7 +260,7 @@
                 <option value="4" selected>.0000</option>
                 <option value="6">.000000</option>
             </select>
-            <button class="btn-icon" onclick="clearAll()" title="Tümünü Temizle">↺</button>
+            <button class="btn-icon" onclick="clearAllFocus()" title="Tümünü Temizle (Esc)">↺</button>
         </div>
     </div>
     
@@ -324,17 +327,37 @@
     </div>
 
     <div class="advanced-stats" id="advanced-stats">
-        <div class="stat-row">
-            <span class="stat-label">Arazi Eğim Yüzdesi (Tan):</span>
+        <div class="stat-item">
+            <span class="stat-label">Yönleme Açısı (Semt)</span>
+            <span class="stat-val" id="stat-bearing">-</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Sapma Açısı (180°'den)</span>
+            <span class="stat-val" id="stat-deflect">-</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Trigonometrik Çarpanlar</span>
+            <span class="stat-val" id="stat-trig">-</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Grad Alt Birimleri</span>
+            <span class="stat-val" id="stat-centesimal">-</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Arazi Eğim Yüzdesi (Tan)</span>
             <span class="stat-val" id="stat-slope">-</span>
         </div>
-        <div class="stat-row">
-            <span class="stat-label">İrtifa Açısı (Zenith varsayımı):</span>
+        <div class="stat-item">
+            <span class="stat-label">İrtifa / Zenith Açısı</span>
             <span class="stat-val" id="stat-zenith">-</span>
         </div>
-        <div class="stat-row">
-            <span class="stat-label">Zaman Açısı (Astronomik):</span>
+        <div class="stat-item">
+            <span class="stat-label">Zaman Açısı</span>
             <span class="stat-val" id="stat-hour">-</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Dünya Yay Uzunluğu (R≈6371)</span>
+            <span class="stat-val" id="stat-arc">-</span>
         </div>
     </div>
 
@@ -364,6 +387,11 @@
     
     let currentBaseDegree = NaN;
     let historyData = [];
+
+    // Kısayol: Esc ile temizle
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') clearAllFocus();
+    });
 
     function toggleTheme() {
         document.body.classList.toggle('dark-theme');
@@ -409,6 +437,8 @@
         }
 
         let normDeg = normalizeAngle(baseDegree, 360);
+        let radVal = normDeg * Math.PI / 180;
+        
         quadEl.innerText = "Bölge: " + determineQuadrant(normDeg);
         radPiEl.innerText = (normDeg / 180).toFixed(4) + " π";
 
@@ -426,27 +456,63 @@
         inputs.dms_m.value = m;
         inputs.dms_s.value = parseFloat(s.toFixed(2)); 
 
-        // Gelişmiş İstatistikler
-        advStats.style.display = 'block';
+        // Gelişmiş İstatistikler Göster
+        advStats.style.display = 'grid';
         
-        // Eğim (%)
+        // 1. Yönleme Açısı (Bearing)
+        let bearing = "";
+        if (normDeg === 0 || normDeg === 360) bearing = "Kuzey (0°)";
+        else if (normDeg === 90) bearing = "Doğu (90°)";
+        else if (normDeg === 180) bearing = "Güney (0°)";
+        else if (normDeg === 270) bearing = "Batı (90°)";
+        else if (normDeg > 0 && normDeg < 90) bearing = `K ${normDeg.toFixed(p)}° D`;
+        else if (normDeg > 90 && normDeg < 180) bearing = `G ${(180 - normDeg).toFixed(p)}° D`;
+        else if (normDeg > 180 && normDeg < 270) bearing = `G ${(normDeg - 180).toFixed(p)}° B`;
+        else if (normDeg > 270 && normDeg < 360) bearing = `K ${(360 - normDeg).toFixed(p)}° B`;
+        document.getElementById('stat-bearing').innerText = bearing;
+
+        // 2. Sapma Açısı (Deflection)
+        let deflect = "";
+        if (normDeg === 180) deflect = "Sapma Yok (0°)";
+        else if (normDeg < 180) deflect = `Sola ${(180 - normDeg).toFixed(p)}°`;
+        else deflect = `Sağa ${(normDeg - 180).toFixed(p)}°`;
+        document.getElementById('stat-deflect').innerText = deflect;
+
+        // 3. Trigonometrik (Sin/Cos)
+        let sinVal = Math.sin(radVal).toFixed(p);
+        let cosVal = Math.cos(radVal).toFixed(p);
+        document.getElementById('stat-trig').innerText = `Sin: ${sinVal} | Cos: ${cosVal}`;
+
+        // 4. Grad Alt Birimleri (c, cc)
+        let totalGrad = normDeg * (200 / 180);
+        let gInt = Math.floor(totalGrad);
+        let cFloat = (totalGrad - gInt) * 100;
+        let cInt = Math.floor(cFloat);
+        let ccFloat = (cFloat - cInt) * 100;
+        document.getElementById('stat-centesimal').innerText = `${gInt}g ${cInt}c ${ccFloat.toFixed(0)}cc`;
+
+        // 5. Eğim (%)
         if (normDeg === 90 || normDeg === 270) {
             document.getElementById('stat-slope').innerText = "Tanımsız (∞)";
         } else {
-            let slope = Math.tan(normDeg * Math.PI / 180) * 100;
+            let slope = Math.tan(radVal) * 100;
             document.getElementById('stat-slope').innerText = "% " + slope.toFixed(2);
         }
 
-        // İrtifa (Zenith = 0 varsayımıyla)
+        // 6. İrtifa (Zenith)
         let altitude = 90 - normDeg;
         document.getElementById('stat-zenith').innerText = altitude.toFixed(p) + "°";
 
-        // Zaman Açısı (1 saat = 15 derece)
+        // 7. Zaman Açısı
         let totalSecs = (normDeg / 15) * 3600;
         let tH = Math.floor(totalSecs / 3600);
         let tM = Math.floor((totalSecs % 3600) / 60);
         let tS = totalSecs % 60;
         document.getElementById('stat-hour').innerText = `${tH}h ${tM}m ${tS.toFixed(2)}s`;
+
+        // 8. Yay Uzunluğu (R = 6371 km)
+        let arc = radVal * 6371;
+        document.getElementById('stat-arc').innerText = arc.toFixed(2) + " km";
     }
 
     function handleInput(source) {
@@ -485,7 +551,11 @@
     }
 
     function recalculate() { if (!isNaN(currentBaseDegree)) updateAllFields(currentBaseDegree); }
-    function clearAll() { updateAllFields(NaN); }
+    
+    function clearAllFocus() { 
+        updateAllFields(NaN); 
+        document.getElementById('deg').focus();
+    }
 
     function renderHistory() {
         const hl = document.getElementById('history-list');
