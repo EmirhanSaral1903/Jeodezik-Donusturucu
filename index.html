@@ -5,163 +5,285 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jeodezik Açı Dönüştürücü</title>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --error: #ef4444;
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #e9ecef;
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
         }
         .container {
-            background-color: white;
-            padding: 2.5rem;
+            background-color: var(--card-bg);
+            padding: 2rem;
             border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             width: 100%;
-            max-width: 400px;
-            box-sizing: border-box;
+            max-width: 480px;
         }
         h2 {
             text-align: center;
-            color: #2c3e50;
             margin-top: 0;
             margin-bottom: 1.5rem;
+            color: var(--text-main);
+            font-size: 1.5rem;
         }
         .input-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
         label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #495057;
+            font-size: 0.875rem;
             font-weight: 600;
+            color: var(--text-main);
         }
-        input {
-            width: 100%;
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        input[type="number"] {
+            flex: 1;
             padding: 0.75rem;
-            border: 1px solid #ced4da;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             font-size: 1rem;
-            box-sizing: border-box;
             transition: border-color 0.2s;
+            background-color: #fff;
         }
-        input:focus {
+        input[type="number"]:focus {
             outline: none;
-            border-color: #4dabf7;
-            box-shadow: 0 0 0 3px rgba(77,171,247,0.2);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .btn-copy {
+            background-color: #f1f5f9;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0 1rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-copy:hover {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+        }
+        .dms-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.875rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 0.5rem;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
         }
         .error {
-            color: #fa5252;
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
+            color: var(--error);
+            font-size: 0.875rem;
+            margin-top: 0.75rem;
             display: none;
             text-align: center;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--text-main);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Açı Dönüştürücü</h2>
+    <h2>Jeodezik Açı Dönüştürücü</h2>
     
     <div class="input-group">
-        <label for="degree">Derece (°)</label>
-        <input type="number" id="degree" placeholder="Örn: 90" oninput="calculateFromDegree()">
+        <label>Ondalık Derece (°)</label>
+        <div class="input-row">
+            <input type="number" id="degree" placeholder="Örn: 90" oninput="handleInput('deg')">
+            <button class="btn-copy" onclick="copyValue('degree')" title="Kopyala">Kopyala</button>
+        </div>
     </div>
 
     <div class="input-group">
-        <label for="grad">Grad (g)</label>
-        <input type="number" id="grad" placeholder="Örn: 100" oninput="calculateFromGrad()">
+        <label>Grad (g)</label>
+        <div class="input-row">
+            <input type="number" id="grad" placeholder="Örn: 100" oninput="handleInput('grad')">
+            <button class="btn-copy" onclick="copyValue('grad')" title="Kopyala">Kopyala</button>
+        </div>
     </div>
 
     <div class="input-group">
-        <label for="radian">Radyan (rad)</label>
-        <input type="number" id="radian" placeholder="Örn: 1.5708" oninput="calculateFromRadian()">
+        <label>Radyan (rad)</label>
+        <div class="input-row">
+            <input type="number" id="radian" placeholder="Örn: 1.5708" oninput="handleInput('rad')">
+            <button class="btn-copy" onclick="copyValue('radian')" title="Kopyala">Kopyala</button>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Milyem (mil)</label>
+        <div class="input-row">
+            <input type="number" id="mil" placeholder="Örn: 1600" oninput="handleInput('mil')">
+            <button class="btn-copy" onclick="copyValue('mil')" title="Kopyala">Kopyala</button>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Derece Dakika Saniye (DMS)</label>
+        <div class="dms-container">
+            <input type="number" id="dms_d" placeholder="Derece (°)" oninput="handleInput('dms')">
+            <input type="number" id="dms_m" placeholder="Dakika (')" oninput="handleInput('dms')">
+            <input type="number" id="dms_s" placeholder="Saniye (&quot;)" oninput="handleInput('dms')">
+        </div>
     </div>
     
+    <button class="btn-primary" onclick="calculateReverseAzimuth()">Ters Semt (Azimut) Hesapla</button>
     <div id="errorMessage" class="error">Lütfen geçerli bir sayı giriniz.</div>
 </div>
 
+<div id="toast" class="toast">Kopyalandı!</div>
+
 <script>
-    const degreeInput = document.getElementById('degree');
-    const gradInput = document.getElementById('grad');
-    const radianInput = document.getElementById('radian');
+    const inputs = {
+        deg: document.getElementById('degree'),
+        grad: document.getElementById('grad'),
+        rad: document.getElementById('radian'),
+        mil: document.getElementById('mil'),
+        dms_d: document.getElementById('dms_d'),
+        dms_m: document.getElementById('dms_m'),
+        dms_s: document.getElementById('dms_s')
+    };
     const errorMsg = document.getElementById('errorMessage');
 
-    function clearInputs() {
-        degreeInput.value = '';
-        gradInput.value = '';
-        radianInput.value = '';
-        errorMsg.style.display = 'none';
-    }
-
-    // Açıları ana çembere (0 ile max arası) indirgeyen fonksiyon
     function normalizeAngle(value, max) {
         let mod = value % max;
-        if (mod < 0) {
-            mod += max;
-        }
+        if (mod < 0) mod += max;
         return mod;
     }
 
-    function calculateFromDegree() {
-        let deg = parseFloat(degreeInput.value);
-        if (degreeInput.value === '') return clearInputs();
-        if (isNaN(deg)) {
-            errorMsg.style.display = 'block';
+    function updateAllFields(baseDegree) {
+        if (isNaN(baseDegree)) {
+            Object.values(inputs).forEach(input => input.value = '');
             return;
         }
+
         errorMsg.style.display = 'none';
+        baseDegree = normalizeAngle(baseDegree, 360);
 
-        // 360'tan büyükse veya negatifse ana açıya çevir
-        if (deg >= 360 || deg < 0) {
-            deg = normalizeAngle(deg, 360);
-            degreeInput.value = parseFloat(deg.toFixed(4));
-        }
+        // Ana ondalık birimler
+        inputs.deg.value = parseFloat(baseDegree.toFixed(5));
+        inputs.grad.value = parseFloat((baseDegree * (200 / 180)).toFixed(5));
+        inputs.rad.value = parseFloat((baseDegree * (Math.PI / 180)).toFixed(5));
+        inputs.mil.value = parseFloat((baseDegree * (6400 / 360)).toFixed(2));
 
-        gradInput.value = (deg * (200 / 180)).toFixed(4);
-        radianInput.value = (deg * (Math.PI / 180)).toFixed(4);
+        // DMS Hesaplama
+        let d = Math.floor(baseDegree);
+        let minFloat = (baseDegree - d) * 60;
+        let m = Math.floor(minFloat);
+        let s = (minFloat - m) * 60;
+
+        inputs.dms_d.value = d;
+        inputs.dms_m.value = m;
+        inputs.dms_s.value = parseFloat(s.toFixed(2));
     }
 
-    function calculateFromGrad() {
-        let grad = parseFloat(gradInput.value);
-        if (gradInput.value === '') return clearInputs();
-        if (isNaN(grad)) {
-            errorMsg.style.display = 'block';
-            return;
-        }
-        errorMsg.style.display = 'none';
+    function handleInput(source) {
+        let baseDegree = 0;
+        let val;
 
-        // 400'den büyükse veya negatifse ana açıya çevir
-        if (grad >= 400 || grad < 0) {
-            grad = normalizeAngle(grad, 400);
-            gradInput.value = parseFloat(grad.toFixed(4));
+        switch (source) {
+            case 'deg':
+                val = parseFloat(inputs.deg.value);
+                if (inputs.deg.value === '') return updateAllFields(NaN);
+                if (isNaN(val)) return errorMsg.style.display = 'block';
+                baseDegree = val;
+                break;
+            case 'grad':
+                val = parseFloat(inputs.grad.value);
+                if (inputs.grad.value === '') return updateAllFields(NaN);
+                if (isNaN(val)) return errorMsg.style.display = 'block';
+                baseDegree = val * (180 / 200);
+                break;
+            case 'rad':
+                val = parseFloat(inputs.rad.value);
+                if (inputs.rad.value === '') return updateAllFields(NaN);
+                if (isNaN(val)) return errorMsg.style.display = 'block';
+                baseDegree = val * (180 / Math.PI);
+                break;
+            case 'mil':
+                val = parseFloat(inputs.mil.value);
+                if (inputs.mil.value === '') return updateAllFields(NaN);
+                if (isNaN(val)) return errorMsg.style.display = 'block';
+                baseDegree = val * (360 / 6400);
+                break;
+            case 'dms':
+                let d = parseFloat(inputs.dms_d.value) || 0;
+                let m = parseFloat(inputs.dms_m.value) || 0;
+                let s = parseFloat(inputs.dms_s.value) || 0;
+                
+                if (inputs.dms_d.value === '' && inputs.dms_m.value === '' && inputs.dms_s.value === '') {
+                    return updateAllFields(NaN);
+                }
+                baseDegree = d + (m / 60) + (s / 3600);
+                break;
         }
-
-        degreeInput.value = (grad * (180 / 200)).toFixed(4);
-        radianInput.value = (grad * (Math.PI / 200)).toFixed(4);
+        updateAllFields(baseDegree);
     }
 
-    function calculateFromRadian() {
-        let rad = parseFloat(radianInput.value);
-        if (radianInput.value === '') return clearInputs();
-        if (isNaN(rad)) {
-            errorMsg.style.display = 'block';
-            return;
-        }
-        errorMsg.style.display = 'none';
+    function calculateReverseAzimuth() {
+        let currentDeg = parseFloat(inputs.deg.value);
+        if (isNaN(currentDeg)) return;
+        
+        let newDeg = currentDeg < 180 ? currentDeg + 180 : currentDeg - 180;
+        updateAllFields(newDeg);
+    }
 
-        const maxRad = 2 * Math.PI;
-        // 2π'den büyükse veya negatifse ana açıya çevir
-        if (rad >= maxRad || rad < 0) {
-            rad = normalizeAngle(rad, maxRad);
-            radianInput.value = parseFloat(rad.toFixed(4));
-        }
-
-        degreeInput.value = (rad * (180 / Math.PI)).toFixed(4);
-        gradInput.value = (rad * (200 / Math.PI)).toFixed(4);
+    function copyValue(elementId) {
+        const val = document.getElementById(elementId).value;
+        if (!val) return;
+        
+        navigator.clipboard.writeText(val).then(() => {
+            const toast = document.getElementById('toast');
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2000);
+        });
     }
 </script>
 
